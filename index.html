@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DataMind — AI Data Analytics Dashboard</title>
+  <meta name="description" content="AI-powered data analytics dashboard. Upload datasets, explore with AI insights, natural language queries, visualizations, and data cleaning.">
+  <link rel="stylesheet" href="index.css">
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <canvas id="particles-canvas"></canvas>
+  <div id="toast-container"></div>
+
+  <div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+      <div class="sidebar-logo">🧠</div>
+      <button class="nav-item active" data-section="upload" id="nav-upload">
+        📁<span class="tooltip">Upload</span>
+      </button>
+      <button class="nav-item" data-section="explore" id="nav-explore">
+        📋<span class="tooltip">Explore</span>
+      </button>
+      <button class="nav-item" data-section="insights" id="nav-insights">
+        💡<span class="tooltip">Insights</span>
+      </button>
+      <button class="nav-item" data-section="chat" id="nav-chat">
+        💬<span class="tooltip">AI Chat</span>
+      </button>
+      <button class="nav-item" data-section="visualize" id="nav-visualize">
+        📈<span class="tooltip">Visualize</span>
+      </button>
+      <button class="nav-item" data-section="clean" id="nav-clean">
+        🧹<span class="tooltip">Clean</span>
+      </button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- Upload Section -->
+      <section class="section active" id="section-upload">
+        <div class="upload-hero">
+          <h1>DataMind</h1>
+          <p class="subtitle">AI-powered data analytics. Upload a dataset and unlock instant insights, visualizations, and natural language queries.</p>
+          <div class="dropzone" id="dropzone">
+            <span class="dropzone-icon">📂</span>
+            <h3>Drop your dataset here</h3>
+            <p>or click to browse files</p>
+            <div class="formats">
+              <span class="format-badge">CSV</span>
+              <span class="format-badge">JSON</span>
+              <span class="format-badge">XLSX</span>
+            </div>
+          </div>
+          <input type="file" id="file-input" accept=".csv,.json,.xlsx,.xls,.tsv" hidden>
+          <div id="upload-loader"><div class="spinner"></div> Processing file...</div>
+          <p class="upload-or">— or try with sample data —</p>
+          <button class="btn-sample" id="load-sample">🚀 Load Sample Dataset</button>
+        </div>
+      </section>
+
+      <!-- Explore Section -->
+      <section class="section" id="section-explore">
+        <div class="section-header">
+          <h2>📋 Data Explorer</h2>
+          <p>Browse, sort, and filter your dataset</p>
+        </div>
+        <div class="stats-bar">
+          <div class="stat-card"><div class="stat-value" id="stat-rows">0</div><div class="stat-label">Rows</div></div>
+          <div class="stat-card"><div class="stat-value" id="stat-cols">0</div><div class="stat-label">Columns</div></div>
+          <div class="stat-card"><div class="stat-value" id="stat-numeric">0</div><div class="stat-label">Numeric</div></div>
+          <div class="stat-card"><div class="stat-value" id="stat-categorical">0</div><div class="stat-label">Categorical</div></div>
+        </div>
+        <div class="table-controls">
+          <input type="text" class="table-search" id="table-search" placeholder="🔍 Search across all columns...">
+          <span id="stat-file" style="color: var(--text-muted); font-size: 13px;"></span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead id="table-head"></thead>
+            <tbody id="table-body"></tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <button id="prev-page">← Previous</button>
+          <span id="page-info">Page 1 of 1</span>
+          <button id="next-page">Next →</button>
+        </div>
+      </section>
+
+      <!-- Insights Section -->
+      <section class="section" id="section-insights">
+        <div class="section-header">
+          <h2>💡 AI Insights</h2>
+          <p>Auto-generated analysis and recommendations</p>
+        </div>
+        <div class="insights-grid" id="insights-list"></div>
+      </section>
+
+      <!-- Chat Section -->
+      <section class="section" id="section-chat">
+        <div class="section-header">
+          <h2>💬 AI Chat Assistant</h2>
+          <p>Ask questions about your data in natural language</p>
+        </div>
+        <div class="chat-layout">
+          <div id="chat-suggestions"></div>
+          <div class="chat-messages" id="chat-messages"></div>
+          <div class="chat-input-bar">
+            <input type="text" id="chat-input" placeholder="Ask something about your data...">
+            <button class="btn-send" id="chat-send">➤</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Visualize Section -->
+      <section class="section" id="section-visualize">
+        <div class="section-header">
+          <h2>📈 Visualizations</h2>
+          <p>Auto-suggested charts and custom chart builder</p>
+        </div>
+        <div class="charts-grid" id="charts-grid"></div>
+
+        <div class="chart-builder">
+          <div class="section-header" style="margin-top: 12px;">
+            <h2>🔧 Chart Builder</h2>
+            <p>Create custom charts with your data</p>
+          </div>
+          <div class="builder-controls">
+            <div class="builder-group">
+              <label>Chart Type</label>
+              <select id="chart-type-select">
+                <option value="bar">Bar Chart</option>
+                <option value="line">Line Chart</option>
+                <option value="doughnut">Doughnut</option>
+                <option value="pie">Pie Chart</option>
+                <option value="radar">Radar</option>
+              </select>
+            </div>
+            <div class="builder-group">
+              <label>X-Axis / Category</label>
+              <select id="chart-x-select"><option value="">Select column...</option></select>
+            </div>
+            <div class="builder-group">
+              <label>Y-Axis / Value</label>
+              <select id="chart-y-select"><option value="">Select column...</option></select>
+            </div>
+            <div class="builder-group">
+              <label>Aggregation</label>
+              <select id="chart-agg-select">
+                <option value="sum">Sum</option>
+                <option value="avg">Average</option>
+                <option value="count">Count</option>
+                <option value="min">Min</option>
+                <option value="max">Max</option>
+              </select>
+            </div>
+            <button class="btn-build" id="build-chart-btn">Build Chart</button>
+          </div>
+          <div id="custom-chart-wrap">
+            <div class="custom-chart-box"><canvas id="custom-chart-canvas"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Clean Section -->
+      <section class="section" id="section-clean">
+        <div class="section-header">
+          <h2>🧹 Data Cleaning Studio</h2>
+          <p>Detect and fix data quality issues</p>
+        </div>
+        <div class="cleaning-header-bar">
+          <button class="btn-action" id="undo-btn">↩ Undo</button>
+          <button class="btn-action" id="redo-btn">↪ Redo</button>
+          <button class="btn-action export" id="export-csv">📥 Export CSV</button>
+          <button class="btn-action export" id="export-json">📥 Export JSON</button>
+        </div>
+        <div class="cleaning-issues" id="cleaning-issues"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
